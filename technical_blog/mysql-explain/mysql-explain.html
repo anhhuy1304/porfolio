@@ -1,0 +1,74 @@
+<style>
+.inner-page-content{
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    margin-left: 30px;
+}    
+.inner-page-content p{
+    font-size: 18px;
+    justify-content: center;
+    align-items: center;
+}    
+.flow {
+    width: 40%;
+    display: block;
+    margin: 0 auto;
+}
+</style>
+<div class="inner-page-content">
+    <h2 class="blog-header"><b>Giới thiệu về explain trong MYSQL</b></h2>
+    <br>
+    <h4><b>Lời mở đầu</b></h4>
+
+    <p>Hiện nay với sự hỗ trợ của các ORM (Object relational mapping) chúng ta thường không viết query raw nữa. 
+        Đối với các hệ thống ít dữ liệu thường sẽ không thấy vấn đề gì. Tuy nhiên khi số lượng dữ liệu tăng lên nếu không chú ý đến
+        performance của câu query thì thật sự nguy hiểm. Một câu query chậm trong một thời điểm tải cao có thể gây ra crash cả hệ thống.
+        Vì vậy hiểu rõ cách thực thi của một câu query là cực kì quan trọng.
+    </p>
+    <p><b>EXPLAIN</b> là một cách hiệu quả và nhanh chóng để biết được 1 câu query có tốt hay không.</p>
+    
+    <img class="flow" style="padding: 0 0 15px 0" src="/technical_blog/mysql-explain/mysql-flow.png">
+
+    <p>Module query optimizer trong MySQL có nhiệm vụ tối ưu hóa các truy vấn SQL
+        để thực thi nhanh hơn và hiệu quả hơn. 
+        Khi gửi một query đến MySQL, query sẽ được phân tích và tối ưu hóa bởi query optimizer 
+        sau đó sẽ đưa ra được một chiến lược thực thi hiệu quả nhất.</p>
+    <p>Với chiến lược thực thi của câu truy vấn ta có thể đánh giá được đây có phải là một câu truy vấn tốt hay không
+        từ đó có thể áp dụng một số biện pháp để cải thiện performance của câu truy vấn.
+    </p>
+
+    <h4><b>Giá trị trả về của Explain</b></h4>
+    <p>Để phân tích chiến lược thực thi của câu truy vấn ta chỉ cần thêm lệnh <b>EXPLAIN</b> vào trước câu truy vấn</p>
+    <div class="code-block">EXPLAIN SELECT * FROM users;</div>
+    <img style="padding: 0 0 15px 0" src="/technical_blog/mysql-explain/explain_value.png">
+
+    <ol>
+    <li><p><code>id:</code> Đây là một số duy nhất được gán cho từng bước thực thi của câu lệnh truy vấn. Các bước càng có giá trị id càng thấp, nghĩa là chúng được thực hiện trước.</p></li>
+    <li><p><code>select_type:</code> Loại của câu select</p></li>
+        <ul>
+            <li><p><code>SIMPLE:</code> Đây là một câu truy vấn mà không có câu truy vấn con nào</p></li>
+            <li><p><code>PRIMARY:</code> Câu lệnh SELECT là bảng chính</p></li>
+            <li><p><code>SUBQUERY:</code>Đây là một câu truy vấn con cho truy vấn PRIMARY</p></li>
+            <li><p><code>DERIVED:</code> Đây là một câu truy vấn con cho truy vấn SUBQUERY nằm trong FROM</p></li>
+        </ul>
+    
+    <li><p><code>table:</code> Tên bảng được sử dụng trong câu lệnh truy vấn.</p></li>
+    <li><p><code>partitions:</code> Số lượng phân vùng bảng được sử dụng.</p></li>
+    <li><p><code>type:</code> Loại phương pháp truy xuất bảng được sử dụng.</p></li>
+        <ul>
+            <li><p><code>system:</code> Truy xuất vào bảng chỉ có một hàng.</p></li>
+            <li><p><code>const:</code> Truy xuất vào bảng với primary key thoả mãn điều kiện trong WHERE. Đây là loại tốt nhất vì khi JOIN với bảng khác sẽ chỉ cần đọc bảng 1 lần với giá trị là hằng số.</p></li>
+            <div class="code-block">EXPLAIN SELECT * FROM users WHERE id = 1;</div>
+            <img style="padding: 0 0 15px 0; width:100%" src="/technical_blog/mysql-explain/const.png">
+            <li><p><code>eq_ref:</code> Truy xuất bảng bằng cách sử dụng toàn bộ hoặc một phần primary_key của bảng.</p></li>
+            <li><p><code>ref:</code> Truy xuất bảng bằng cách sử dụng chỉ một hoặc một số cột trong bảng có index.</p></li>
+            <li><p><code>range:</code> Truy xuất vào bảng với query trên cột có index và duyệt theo một khoản</p></li>
+            <li><p><code>index:</code> Đây là truy vấn tệ thứ 2 khi nó phải duyệt toàn bộ cây index để tìm ra giá trị thoả mãn điều kiện. Tuy nhiên trong thực tế độ cao của cây chỉ mục không quá lớn nên nó vẫn tốt hơn rất nhiều so với type ALL</p></li>
+            <li><p><code>all:</code> Đây là truy vấn tệ nhất khi phải đọc toàn bộ giá trị của bảng để tìm ra kết quả phù hợp với điều kiện. 
+                Nó cho thấy chúng ta đã đánh thiếu index</p></li>
+        </ul>
+    <li><p><code>possible_keys:</code> Các chỉ mục có thể được sử dụng cho truy vấn.</p></li>
+    </ol>
+    
+</div>

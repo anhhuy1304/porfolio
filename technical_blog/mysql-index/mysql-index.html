@@ -1,0 +1,93 @@
+<style>
+.inner-page-content{
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    margin-left: 30px;
+}    
+.inner-page-content p{
+    font-size: 18px;
+    justify-content: center;
+    align-items: center;
+}    
+</style>
+<div class="inner-page-content">
+    <h2 class="blog-header"><b>Index trong MYSQL</b></h2>
+    <br>
+    <h4><b>Lời mở đầu</b></h4>
+    <p>Ngày nay khi data số bùng nổ một cách nhanh chóng, đối với backend engineer việc phải làm việc trên bảng với hàng chục triệu record diễn ra thường xuyên.
+    Index là một thành phần vô cùng quan trọng và đóng vai trò then chốt trong sự thành công của các database hiện nay. 
+    Nó giúp cải thiện hiệu năng truy vấn một cách mạnh mẽ. Vì vậy việc hiểu rõ cách hoạt động của Index là vô cùng quan trọng.
+    </p>
+    <h4><b>Index là gì?</b></h4>
+    <p>
+        Index là một cơ chế mapping giữa key và record cần tìm thông qua một giá trị search key được chọn.
+        <br>
+        Ta có thể ví index như một phụ lục của một cuốn sách. Khi cần tìm một chương nào đó ta chỉ cần xem mục lục, từ đó lấy ra số trang rồi dò ngược lại để xem nội dung mà ta cần tìm kiếm.
+    </p>
+    <img style="padding: 0 0 15px 0; width: 20%; margin: 0 auto" src="/technical_blog/mysql-index/key.png">
+    <p>
+        MYSQL phân loại index theo 2 khái niệm chính:
+        <ul>
+            <li><b>Primary index (Clustered index)</b></li>
+            <li><b>Secondary index (Non-Clustered index)</b></li>
+        </ul>
+    </p>
+    <p>Ngoài ra các cấu trúc dữ liệu để lưu index cũng gồm nhiều loại như: <code>Hashmap, B-Tree, B+ Tree, R-Tree</code></p>
+    <p>Để hiểu rõ về các khái niệm cũng như các data structure để lưu index bạn có thể đọc thêm tại bài <a href="#">Index được lưu như thế nào?</a>
+    </p>
+
+    <h4><b>Sử dụng Index</b></h4>
+    <p>Index tăng tốc query vậy tại sao Database không tự động đánh index cho tất cả các column mà chỉ default cho 
+        primary key và các cột unique?<br><br>
+    Đương nhiên là Index cũng có hạn chế. Nếu đánh index nếu không khéo léo sẽ gây phản tác dụng. 
+    Khi tạo mới một record hoặc update giá trị trên column đã đánh index thì database phải thực hiện cập nhật lại index (khi thêm một từ mới vào từ điển bạn phải sắp xếp lại toàn bộ từ điển mà đúng khôgn nào =))) .
+   <br> 
+   <br> 
+    Vì thế đối với các hệ thống high-write, low-read việc đánh index sẽ gây giảm performance.
+    </p>
+    <br>
+    <p>Vậy giờ hệ thống chủ yếu là đọc, query thì join rất nhiều bảng mà bảng nào cũng to hết? <a href="/inner-page.html?page=mysql-explain">EXPLAIN</a> query ra được kết quả như vầy. Vậy nên index như thế nào?</p>
+    <img style="padding: 0 0 15px 0" src="/technical_blog/mysql-index/all.png">
+    <p style="text-align:center; font-size: 14px"><i>Ảnh: internet</i></p>
+    <p>
+        Như ví dụ bên trên ta có thể thấy câu query đang full scan 2 bảng <code>lmt</code> và <code>ovr</code> vì thế ta có thể tìm cách đánh index cho 2 bảng này để cải thiện performance.
+    </p>
+    <p>
+        Bảng chất của việc đánh Index là lấy giá trị của column ra làm key và value là record. Dùng một data structure phù hợp cho việc tìm kiếm (thường là O(logN)) và tìm kiếm trên key đã index. Vì vậy việc đánh index cũng có một số nguyên tắc:
+        <br>
+        <ul>
+            <li>
+                Độ unique của column đánh index vô cùng quan trọng. 
+                <br>
+                Giá trị của column càng duy nhất thì performance truy vấn trên column đó sẽ càng tốt.
+                <br>
+                Ví dụ như column <code>Gender: Male/Female</code> là một column tệ cho việc đánh index vì chỉ số <code>cardinality = 2</code> 
+                <br>
+                Khi xem chi tiết Index ta sẽ thấy giá trị này.
+                <div class="code-block">SHOW INDEX TABLE_NAME;</div>
+                <img style="padding: 0 0 15px 0; width:100%" src="/technical_blog/mysql-index/show_index.png">
+            </li>
+            <br>
+            <li>
+                Thứ tự của các cột
+                <br>
+                Khi tạo index trên nhiều column chúng ta phải quan tâm đến thứ tự của các column
+                Ví dụ khi đánh index trên 2 cột theo thứ tự <code>first_name, last_name</code>
+                <br>Với query 
+                <code>SELECT * FROM user WHERE first_name = 'Huy' and last_name = 'Nguyen'</code> 
+                <br>hoặc query <code>SELECT * FROM user WHERE first_name = 'Huy'</code> sẽ ăn index. Tuy nhiên query 
+                <br><code>SELECT * FROM user WHERE last_name = 'Nguyen'</code> sẽ không ăn index mặc dù column <code>last_name</code> đã được đánh index.
+                <br> Vì vậy nếu hệ thống của chúng ta hay truy vấn last_name nhiều hơn hãy đảo thứ tự của index lại. 
+            </li>
+            <br>
+            <li> Chỉ nên đánh index cho nhưng column thường xuyên nằm trong where, hoặc dùng để order</li>
+            <br>
+            <li> Không nên đánh index cho những column lớn. Ví dụ column <code>description: text</code> với column này chúng ta chỉ nên đánh index cho khoảng 10 ký tự đầu của column.
+            </li>
+        </ul>
+    </p>
+    <h4><b>Tham khảo</b></h4>
+    <p><i><a href="https://www.vertabelo.com/blog/all-about-indexes-the-very-basics/">https://www.vertabelo.com/blog/all-about-indexes-the-very-basics/</a></i></p>
+
+</div>

@@ -1,0 +1,21 @@
+{"data":[
+    {
+      "header": "Explain trong MYSQL",
+      "image": "/technical_blog/mysql-explain/mysql-cover.png",
+      "filter": "filter-backend",
+      "link": "/inner-page.html?page=mysql-explain"
+    },
+    {
+      "header": "Index in MYSQL",
+      "image": "/technical_blog/mysql-index/index.png",
+      "filter": "filter-backend",
+      "link": "/inner-page.html?page=mysql-index"
+    },
+    {
+      "header": "Why MySQL Uses B+ Tree",
+      "image": "/technical_blog/mysql-structure-storage/bplustree.png",
+      "filter": "filter-backend",
+      "link": "/inner-page.html?page=mysql-structure-storage"
+    }
+  ]
+}
